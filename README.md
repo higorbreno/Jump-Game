@@ -1,3 +1,5 @@
 # Jump-Game
 
-A jumping game made in assembly mips.
+Um jogo sobre pular obstáculos feito em assembly mips.
+
+A game about jumping obstacles made in assembly mips.
