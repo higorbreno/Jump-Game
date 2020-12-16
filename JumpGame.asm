@@ -31,14 +31,14 @@
 	.eqv FLOOR_Y_POS 30 #Posição Y do chão
 #Constantes do jogador
 	.eqv PLAYER_X_POS 29 #Posição X do player
-	.eqv PLAYER_WIDTH 4 #Largura do player
-	.eqv PLAYER_HEIGHT 4 #Altura do player
+	.eqv PLAYER_WIDTH 5 #Largura do player
+	.eqv PLAYER_HEIGHT 5 #Altura do player
 	.eqv MAX_HEALTH 3 #Vida máxima do jogador
 #Constantes do Inimigo
 	.eqv ENEMY_Y_POS 32 #Posição Y do inimigo
 	.eqv ENEMY_VELOCITY 25 #Velocidade de movimento do inimigo
-	.eqv ENEMY_WIDTH 4 #Largura do inimigo
-	.eqv ENEMY_HEIGHT 4  #Altura do inimigo
+	.eqv ENEMY_WIDTH 5 #Largura do inimigo
+	.eqv ENEMY_HEIGHT 5  #Altura do inimigo
 	
 #Variáveis
 	deltaTime: .double 0
@@ -70,10 +70,9 @@
 		j FillLoop
 	endFill:
 	li $a2, CINZA
-	li $t0, SCREEN_WIDTH
 	add $a0, $gp, $zero
 	li $a0, 0
-	li $t1, FLOOR_Y_POS
+	li $a1, FLOOR_Y_POS
 	jal coordenadaParaEndereco
 	addi $a0, $v0, 0
 	FloorLoop:
@@ -158,9 +157,9 @@
 	lw $t2, playerYPos #Posição y do player
 	
 	addi $t3, $t1, PLAYER_WIDTH
-	addi $t3, $t3, 1 #Valor para checar se o loop de x deve acabar
+	#addi $t3, $t3, 1 #Valor para checar se o loop de x deve acabar
 	addi $t4, $t2, PLAYER_HEIGHT
-	addi $t4, $t4, 1 #Valor para checar se o loop de y deve acabar
+	#addi $t4, $t4, 1 #Valor para checar se o loop de y deve acabar
 	
 	addi $t5, $t1, 0 #Contador para x
 	addi $t6, $t2, 0 #Contador para y
@@ -188,10 +187,8 @@
 	li $t1, PLAYER_X_POS #Posição x do player
 	lw $t2, playerYOldPos #Posição y do player
 	
-	addi $t3, $t1, PLAYER_WIDTH
-	addi $t3, $t3, 1 #Valor para checar se o loop de x deve acabar
-	addi $t4, $t2, PLAYER_HEIGHT
-	addi $t4, $t4, 1 #Valor para checar se o loop de y deve acabar
+	addi $t3, $t1, PLAYER_WIDTH #Valor para checar se o loop de x deve acabar
+	addi $t4, $t2, PLAYER_HEIGHT #Valor para checar se o loop de y deve acabar
 	
 	addi $t5, $t1, 0 #Contador para x
 	addi $t6, $t2, 0 #Contador para y
