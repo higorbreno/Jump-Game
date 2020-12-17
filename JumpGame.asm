@@ -16,7 +16,10 @@
 #					                  	     #   
 #	Ajustes como tamanho do personagem e do inimigo,       	     #
 #	altura do chão, velocidade do inimigo, entre outras,         #   
-#	podem ser modificados mudando os valores das constantes      #   
+#	podem ser modificados mudando os valores das constantes      #
+#					                  	     #   
+#	Pontuação e quantidade de vidas restantes são mostradas      #  
+#	no console do mars		                  	     #       
 ######################################################################
 
 	.data
