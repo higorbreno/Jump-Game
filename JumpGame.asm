@@ -141,6 +141,7 @@
 	add $t0, $t0, $t1
 	sw $t0, playerYPos
 	jal checkColisaoPlayerChao
+	jal checkJump
 	jal apagarPlayer
 	lw $t0, playerYPos
 	sw $t0, playerYOldPos
@@ -210,6 +211,24 @@
 	fimApagar:
 	sw $t7, playerYOldPos
 	jr $t0
+	
+###################################################################################
+
+	checkJump:
+	lui $t0, 0xffff
+	lw $t1, 0($t0)
+	andi $t1, $t1, 0x0001
+	bne $t1, $zero, jump
+	jr $ra
+	
+###################################################################################
+
+	jump:
+	lw $s2, 4( $t0)
+	li $t0, 1
+	sw $t0, playerYPos
+	sw $t0, playerVelocity
+	jr $ra
 	
 ###################################################################################	
 	
