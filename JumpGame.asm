@@ -11,7 +11,12 @@
 #	Display Height: 256					     #
 #	Base Address for Display: 0x10008000 ($gp)	             #
 #                                                                    #
-#       use a tecla espaço para pular (32 em ASCII)                  #       
+#       Qualquer tela digitável como letras ou numeros pode 	     #
+#	ser usada para pular		                  	     #  
+#					                  	     #   
+#	Ajustes como tamanho do personagem e do inimigo,       	     #
+#	altura do chão, velocidade do inimigo, entre outras,         #   
+#	podem ser modificados mudando os valores das constantes      #   
 ######################################################################
 
 	.data
@@ -41,7 +46,7 @@
 	.eqv ENEMY_HEIGHT 3  #Altura do inimigo
 	
 #Variáveis
-	deltaTime: .double 0
+	jaContouPonto: .word 0
 	score: .word 0
 #Variáveis do jogador
 	health: .word 3
@@ -52,6 +57,9 @@
 	enemyYPos: .word 0
 	enemyXPos: .word 0
 	enemyXOldPos: .word 0
+	
+	scoreStr: .asciiz "\nSua pontuação atual é de "
+	healthStr: .asciiz "\nSua quantidade de vidas restantes é "
 	
 	.globl main
 
@@ -116,7 +124,6 @@
 	
 	init:
 	#Inicia os valores default nas variáveis
-	sw $zero, deltaTime
 	sw $zero, score
 	
 	li $t0, MAX_HEALTH
@@ -159,6 +166,7 @@
 	li $t1, ENEMY_VELOCITY
 	sub $t0, $t0, $t1
 	sw $t0, enemyXPos
+	jal checkScore
 	jal checkColisaoPlayerChao
 	jal checkAlturaMaxima
 	jal checkJump
@@ -308,6 +316,8 @@
 	subi $t0, $t0, 1
 	subi $t0, $t0, ENEMY_WIDTH
 	sw $t0, enemyXPos
+	li $t0, 0
+	sw $t0, jaContouPonto
 	fimCheckInimigoX:
 	jr $ra
 
@@ -382,6 +392,12 @@
 	lw $t5, health
 	subi $t5, $t5, 1
 	sw $t5, health
+	li $v0, 4
+	la $a0, healthStr
+	syscall
+	li $v0, 1
+	lw $a0, health
+	syscall
 	
 	li $t3, SCREEN_WIDTH
 	subi $t3, $t3, 1
@@ -392,6 +408,31 @@
 	jr $ra
 	
 ###################################################################################	
+
+	checkScore:
+	lw $t0, jaContouPonto
+	bnez $t0, fimCheckScore
+	
+	lw $t0, enemyXPos
+	addi $t0, $t0, ENEMY_WIDTH
+	li $t1, PLAYER_X_POS
+	bge $t0, $t1, fimCheckScore
+	
+	li $t0, 1
+	sw $t0, jaContouPonto
+	lw $t0, score
+	addi $t0, $t0, SCORE_ADD_VALUE
+	sw $t0, score
+	li $v0, 4
+	la $a0, scoreStr
+	syscall
+	li $v0, 1
+	lw $a0, score
+	syscall
+	fimCheckScore:
+	jr $ra
+
+###################################################################################
 	
 	coordenadaParaEndereco: 
 	#Retorna o endereço do pixel nas coordenadas guardadas em $a0(x) e $a1(y) em $v0
