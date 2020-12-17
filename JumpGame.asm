@@ -28,17 +28,17 @@
 	.eqv AZUL 0x0000FF
 #Constantes do mundo
 	.eqv GRAVITY 10 #Aceleração da gravidade
-	.eqv FLOOR_Y_POS 30 #Posição Y do chão
+	.eqv FLOOR_Y_POS 25 #Posição Y do chão
 #Constantes do jogador
 	.eqv PLAYER_X_POS 29 #Posição X do player
 	.eqv PLAYER_WIDTH 5 #Largura do player
 	.eqv PLAYER_HEIGHT 5 #Altura do player
+	.eqv MAX_JUMP_HEIGHT 10 #Altura máxima do pulo
 	.eqv MAX_HEALTH 3 #Vida máxima do jogador
 #Constantes do Inimigo
-	.eqv ENEMY_Y_POS 32 #Posição Y do inimigo
-	.eqv ENEMY_VELOCITY 25 #Velocidade de movimento do inimigo
-	.eqv ENEMY_WIDTH 5 #Largura do inimigo
-	.eqv ENEMY_HEIGHT 5  #Altura do inimigo
+	.eqv ENEMY_VELOCITY 1 #Velocidade de movimento do inimigo
+	.eqv ENEMY_WIDTH 4 #Largura do inimigo
+	.eqv ENEMY_HEIGHT 3  #Altura do inimigo
 	
 #Variáveis
 	deltaTime: .double 0
@@ -47,9 +47,11 @@
 	health: .word 3
 	playerYOldPos: .word 0
 	playerYPos: .word 0
-	playerVelocity: .word 1
+	playerVelocity: .word 0
 #Variáveis do inimigo
-	enemyXPos: .word 63
+	enemyYPos: .word 0
+	enemyXPos: .word 0
+	enemyXOldPos: .word 0
 	
 	.globl main
 
@@ -116,15 +118,25 @@
 	#Inicia os valores default nas variáveis
 	sw $zero, deltaTime
 	sw $zero, score
-	#sw $zero, playerVelocity
+	
 	li $t0, MAX_HEALTH
 	sw $t0, health
 	li $t0, 1
-	sw $t0, playerYPos
-	li $t0, 1
-	sw $t0, playerYPos
-	li $t0, 255
+	sw $t0, playerVelocity
+	li $t0, SCREEN_WIDTH
+	subi $t0, $t0, 1
+	subi $t0, $t0, ENEMY_WIDTH
 	sw $t0, enemyXPos
+	sw $t0, enemyXOldPos
+	
+	li $t0, FLOOR_Y_POS
+	li $t1, PLAYER_HEIGHT
+	sub $t1, $t0, $t1
+	sw $t1, playerYPos
+	sw $t1, playerYOldPos
+	li $t1, ENEMY_HEIGHT
+	sub $t1, $t0, $t1
+	sw $t1, enemyYPos
 	jr $ra
 	
 ###################################################################################	
@@ -136,16 +148,29 @@
 	li $v0, 32
 	li $a0, 50
 	syscall
+	
+	jal checkColisaoPlayerInimigo
 	lw $t0, playerYPos
 	lw $t1, playerVelocity
 	add $t0, $t0, $t1
 	sw $t0, playerYPos
+	
+	lw $t0, enemyXPos
+	li $t1, ENEMY_VELOCITY
+	sub $t0, $t0, $t1
+	sw $t0, enemyXPos
 	jal checkColisaoPlayerChao
+	jal checkAlturaMaxima
 	jal checkJump
+	jal checkInimigoXPos
 	jal apagarPlayer
+	jal apagarEnemy
 	lw $t0, playerYPos
 	sw $t0, playerYOldPos
+	lw $t0, enemyXPos
+	sw $t0, enemyXOldPos
 	jal desenharPlayer
+	jal desenharEnemy
 	j update	
 	
 ###################################################################################	
@@ -212,22 +237,111 @@
 	sw $t7, playerYOldPos
 	jr $t0
 	
+###################################################################################	
+
+	desenharEnemy:
+	#Função que desenha o player no local que ele estiver
+	la $t0, 0($ra)
+	
+	lw $t1, enemyXPos #Posição x do player
+	lw $t2, enemyYPos #Posição y do player
+	
+	addi $t3, $t1, ENEMY_WIDTH #Valor para checar se o loop de x deve acabar
+	addi $t4, $t2, ENEMY_HEIGHT #Valor para checar se o loop de y deve acabar
+	
+	addi $t5, $t1, 0 #Contador para x
+	addi $t6, $t2, 0 #Contador para y
+	
+	loop1DesenharEnemy:
+		loop2DesenharEnemy:
+			addi $a0, $t5, 0
+			addi $a1, $t6, 0
+			jal coordenadaParaEndereco
+			li $a1, VERMELHO
+			jal desenharPixel
+			addi $t5, $t5, 1
+		bne $t5, $t3, loop2DesenharEnemy
+		addi $t6, $t6, 1
+		addi $t5, $t1, 0
+	bne $t6, $t4, loop1DesenharEnemy
+	jr $t0
+	
+###################################################################################	
+
+	apagarEnemy:
+	#Função que desenha o player no local que ele estiver
+	la $t0, 0($ra)
+	
+	lw $t1, enemyXOldPos #Posição x do inimigo
+	lw $t2, enemyYPos #Posição y do inimigo
+	
+	addi $t3, $t1, ENEMY_WIDTH #Valor para checar se o loop de x deve acabar
+	addi $t4, $t2, ENEMY_HEIGHT #Valor para checar se o loop de y deve acabar
+	
+	addi $t5, $t1, 0 #Contador para x
+	addi $t6, $t2, 0 #Contador para y
+	
+	lw $t7, enemyXPos
+	beq $t7, $t2, fimApagarEnemy
+	loop1ApagarEnemy:
+		loop2ApagarEnemy:
+			addi $a0, $t5, 0
+			addi $a1, $t6, 0
+			jal coordenadaParaEndereco
+			li $a1, PRETO
+			jal desenharPixel
+			addi $t5, $t5, 1
+		bne $t5, $t3, loop2ApagarEnemy
+		addi $t6, $t6, 1
+		addi $t5, $t1, 0
+	bne $t6, $t4, loop1ApagarEnemy
+	fimApagarEnemy:
+	sw $t7, enemyXOldPos
+	jr $t0
+	
+###################################################################################
+
+	checkInimigoXPos:
+	lw $t0, enemyXPos
+	bgez $t0, fimCheckInimigoX
+	li $t0, SCREEN_WIDTH
+	subi $t0, $t0, 1
+	subi $t0, $t0, ENEMY_WIDTH
+	sw $t0, enemyXPos
+	fimCheckInimigoX:
+	jr $ra
+
 ###################################################################################
 
 	checkJump:
 	lui $t0, 0xffff
 	lw $t1, 0($t0)
 	andi $t1, $t1, 0x0001
-	bne $t1, $zero, jump
+	beq $t1, $zero, fimCheckJump
+	li $t2, FLOOR_Y_POS
+	lw $t1, playerYPos
+	addi $t1, $t1, PLAYER_HEIGHT
+	bge $t1, $t2, jump
+	fimCheckJump:
 	jr $ra
 	
 ###################################################################################
 
 	jump:
 	lw $s2, 4( $t0)
-	li $t0, 1
-	sw $t0, playerYPos
+	li $t0, -1
 	sw $t0, playerVelocity
+	jr $ra
+	
+###################################################################################
+
+	checkAlturaMaxima:
+	lw $t0, playerYPos
+	li $t1, MAX_JUMP_HEIGHT
+	bge $t0, $t1, fimCheckAltura
+	li $t0, 1
+	sw $t0, playerVelocity
+	fimCheckAltura:
 	jr $ra
 	
 ###################################################################################	
@@ -247,6 +361,34 @@
 	sw $zero, playerVelocity
 	subi $t1, $t0, PLAYER_HEIGHT
 	sw $t1, playerYPos
+	jr $ra
+	
+###################################################################################	
+
+	checkColisaoPlayerInimigo:
+	lw $t0, playerYPos
+	li $t1, PLAYER_X_POS
+	lw $t2, enemyYPos
+	lw $t3, enemyXPos
+	
+	addi $t4, $t0, PLAYER_HEIGHT
+	bgt $t2, $t4, fimCheckColisaoPI
+	addi $t4, $t2, ENEMY_HEIGHT
+	bgt $t0, $t4, fimCheckColisaoPI
+	addi $t4, $t1, PLAYER_WIDTH
+	bgt $t3, $t4, fimCheckColisaoPI
+	addi $t4, $t3, ENEMY_HEIGHT
+	bgt $t1, $t4, fimCheckColisaoPI
+	lw $t5, health
+	subi $t5, $t5, 1
+	sw $t5, health
+	
+	li $t3, SCREEN_WIDTH
+	subi $t3, $t3, 1
+	subi $t3, $t3, ENEMY_WIDTH
+	sw $t3, enemyXPos
+		
+	fimCheckColisaoPI:
 	jr $ra
 	
 ###################################################################################	
