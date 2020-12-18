@@ -31,7 +31,7 @@
 #Constantes de cores
 	.eqv PRETO 0x000000
 	.eqv BRANCO 0xFFFFFF
-	.eqv CINZA 0x8A6D46
+	.eqv CINZA 0x4F4F4F
 	.eqv VERMELHO 0xFF0000
 	.eqv VERDE 0x00FF00
 	.eqv AZUL 0x0000FF
@@ -41,15 +41,15 @@
 	.eqv GRAVITY 10 #Aceleração da gravidade
 	.eqv FLOOR_Y_POS 61 #Posição Y do chão
 #Constantes do jogador
-	.eqv PLAYER_X_POS 29 #Posição X do player
-	.eqv PLAYER_WIDTH 18 #Largura do player
+	.eqv PLAYER_X_POS 64 #Posição X do player
+	.eqv PLAYER_WIDTH 9 #Largura do player
 	.eqv PLAYER_HEIGHT 23 #Altura do player
 	.eqv MAX_JUMP_HEIGHT 10 #Altura máxima do pulo
 	.eqv MAX_HEALTH 3 #Vida máxima do jogador
 #Constantes do Inimigo
-	.eqv ENEMY_VELOCITY 1 #Velocidade de movimento do inimigo
+	.eqv ENEMY_VELOCITY 3 #Velocidade de movimento do inimigo
 	.eqv ENEMY_WIDTH 4 #Largura do inimigo
-	.eqv ENEMY_HEIGHT 3  #Altura do inimigo
+	.eqv ENEMY_HEIGHT 1  #Altura do inimigo
 	
 #Variáveis
 	jaContouPonto: .word 0
@@ -85,7 +85,7 @@
 		addiu $a0, $a0, 4 #increment counter
 		j FillLoop
 	endFill:
-	li $a2, CINZA
+	li $a2, PRETO
 	add $a0, $gp, $zero
 	li $a0, 0
 	li $a1, FLOOR_Y_POS
@@ -134,7 +134,7 @@
 	
 	li $t0, MAX_HEALTH
 	sw $t0, health
-	li $t0, 1
+	li $t0, 20
 	sw $t0, playerVelocity
 	li $t0, SCREEN_WIDTH
 	subi $t0, $t0, 1
@@ -142,14 +142,15 @@
 	sw $t0, enemyXPos
 	sw $t0, enemyXOldPos
 	
-	#li $t0, FLOOR_Y_POS
-	#li $t1, PLAYER_HEIGHT
-	#sub $t1, $t0, $t1
-	li $t1, 0
+	li $t0, FLOOR_Y_POS
+	li $t1, PLAYER_HEIGHT
+	sub $t1, $t0, $t1
+	#li $t1, 0
 	sw $t1, playerYPos
 	sw $t1, playerYOldPos
 	li $t1, ENEMY_HEIGHT
 	sub $t1, $t0, $t1
+	subi $t1, $t1, 10
 	sw $t1, enemyYPos
 	jr $ra
 	
@@ -192,7 +193,7 @@
 
 	desenharPlayer:
 	#Função que desenha o player no local que ele estiver
-	la $t0, 0($ra)
+	la $t5, 0($ra)
 	
 	li $a0, PLAYER_X_POS #Posição x do player
 	lw $a1, playerYPos #Posição y do player
@@ -204,45 +205,37 @@
 	li $23, BRANCO 
 	li $24, CREME
 	
-	jal coordenadaParaEndereco
+	jal coordenadaParaEnderecoPlayer
 
 	move $10, $v0
+	#addi $v0, $gp, 0
 	jal bitmapPers
 	
-	jr $t0
+	jr $t5
 	
 ###################################################################################	
 
 	apagarPlayer:
 	#Função que desenha o player no local que ele estiver
-	la $t0, 0($ra)
+	la $t5, 0($ra)
 	
-	li $t1, PLAYER_X_POS #Posição x do player
-	lw $t2, playerYOldPos #Posição y do player
+	li $a0, PLAYER_X_POS #Posição x do player
+	lw $a1, playerYOldPos #Posição y do player
 	
-	addi $t3, $t1, PLAYER_WIDTH #Valor para checar se o loop de x deve acabar
-	addi $t4, $t2, PLAYER_HEIGHT #Valor para checar se o loop de y deve acabar
+	li $20, BRANCO
+	li $21, BRANCO
+	li $22, BRANCO
+	li $23, BRANCO 
+	li $24, BRANCO
 	
-	addi $t5, $t1, 0 #Contador para x
-	addi $t6, $t2, 0 #Contador para y
+	jal coordenadaParaEnderecoPlayer
+
+	move $10, $v0
+	#addi $v0, $gp, 0
+	jal bitmapPers
 	
-	lw $t7, playerYPos
-	beq $t7, $t2, fimApagar
-	loop1Apagar:
-		loop2Apagar:
-			addi $a0, $t5, 0
-			addi $a1, $t6, 0
-			jal coordenadaParaEndereco
-			li $a1, PRETO
-			jal desenharPixel
-			addi $t5, $t5, 1
-		bne $t5, $t3, loop2Apagar
-		addi $t6, $t6, 1
-		addi $t5, $t1, 0
-	bne $t6, $t4, loop1Apagar
-	fimApagar:
 	sw $t7, playerYOldPos
-	jr $t0
+	jr $t5
 	
 ###################################################################################	
 
@@ -264,7 +257,7 @@
 			addi $a0, $t5, 0
 			addi $a1, $t6, 0
 			jal coordenadaParaEndereco
-			li $a1, VERMELHO
+			li $a1, CINZA
 			jal desenharPixel
 			addi $t5, $t5, 1
 		bne $t5, $t3, loop2DesenharEnemy
@@ -295,7 +288,7 @@
 			addi $a0, $t5, 0
 			addi $a1, $t6, 0
 			jal coordenadaParaEndereco
-			li $a1, PRETO
+			li $a1, BRANCO
 			jal desenharPixel
 			addi $t5, $t5, 1
 		bne $t5, $t3, loop2ApagarEnemy
@@ -338,7 +331,7 @@
 
 	jump:
 	lw $s2, 4( $t0)
-	li $t0, -1
+	li $t0, -3
 	sw $t0, playerVelocity
 	jr $ra
 	
@@ -348,7 +341,7 @@
 	lw $t0, playerYPos
 	li $t1, MAX_JUMP_HEIGHT
 	bge $t0, $t1, fimCheckAltura
-	li $t0, 1
+	li $t0, 3
 	sw $t0, playerVelocity
 	fimCheckAltura:
 	jr $ra
@@ -429,6 +422,29 @@
 	lw $a0, score
 	syscall
 	fimCheckScore:
+	jr $ra
+
+###################################################################################
+
+	coordenadaParaEnderecoPlayer:
+	subi $a0, $a0, 36
+	sll $a0, $a0, 2
+	li $t0, SCREEN_WIDTH
+	#li $t1, SCREEN_HEIGHT
+	#sub $t1, $t1, $a1
+	mul $a1, $t0, $a1
+	mul $a1, $a1, 4
+	li $t0, PLAYER_HEIGHT
+	li $t1, FLOOR_Y_POS
+	sub $t1, $t1, $t0
+	mul $t1, $t1, 4
+	li $t0, SCREEN_WIDTH
+	mul $t1, $t1, $t0
+	
+	
+	add $v0, $gp, $a0
+	add $v0, $v0, $a1
+	sub $v0, $v0, $t1
 	jr $ra
 
 ###################################################################################
