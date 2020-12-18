@@ -41,7 +41,7 @@
 	.eqv GRAVITY 10 #Aceleração da gravidade
 	.eqv FLOOR_Y_POS 61 #Posição Y do chão
 #Constantes do jogador
-	.eqv PLAYER_X_POS 64 #Posição X do player
+	.eqv PLAYER_X_POS 30 #Posição X do player
 	.eqv PLAYER_WIDTH 9 #Largura do player
 	.eqv PLAYER_HEIGHT 23 #Altura do player
 	.eqv MAX_JUMP_HEIGHT 10 #Altura máxima do pulo
@@ -50,6 +50,7 @@
 	.eqv ENEMY_VELOCITY 3 #Velocidade de movimento do inimigo
 	.eqv ENEMY_WIDTH 4 #Largura do inimigo
 	.eqv ENEMY_HEIGHT 1  #Altura do inimigo
+	.eqv ENEMY_BASE_Y_POS 10
 	
 #Variáveis
 	jaContouPonto: .word 0
@@ -66,6 +67,7 @@
 	
 	scoreStr: .asciiz "\nSua pontuação atual é de "
 	healthStr: .asciiz "\nSua quantidade de vidas restantes é "
+	reiniciarStr: .asciiz "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 	
 	.globl main
 
@@ -159,7 +161,7 @@
 	update:
 	#Função que roda o loop principal do jogo
 	lw $t9, health
-	beq $t9, $zero, fim #Se total de vidas for igual a zero, o jogo acaba
+	beq $t9, $zero, reiniciar #Se total de vidas for igual a zero, o jogo acaba
 	li $v0, 32
 	li $a0, 50
 	syscall
@@ -310,6 +312,24 @@
 	sw $t0, enemyXPos
 	li $t0, 0
 	sw $t0, jaContouPonto
+	li $t0, FLOOR_Y_POS
+	li $t1, ENEMY_HEIGHT
+	sub $t1, $t0, $t1
+	subi $t1, $t1, 3
+	li $v0, 42
+	li $a0, 551526184
+	li $a1, 14
+	syscall
+	li $t0, 7
+	blt $a0, $t0, subtrair
+	li $v0, 42
+	li $a0, 1656512
+	li $a1, 10
+	syscall
+	subi $t1, $t1, 20
+	subtrair:
+	sub $t1, $t1, $a0
+	sw $t1, enemyYPos
 	fimCheckInimigoX:
 	jr $ra
 
@@ -908,6 +928,19 @@ sw $23, 30900($10)
 sw $23, 30904($10)
 	jr $31
 		
+###################################################################################
+
+	reiniciar:
+	jal apagarPlayer
+	jal apagarEnemy
+	li $v0, 32
+	li $a0, 2000
+	syscall
+	li $v0, 4
+	la $a0, reiniciarStr
+	syscall
+	j main
+
 ###################################################################################
 						
 	fim:
